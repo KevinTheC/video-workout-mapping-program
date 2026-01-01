@@ -1,0 +1,45 @@
+# === Android / Gradle ===
+.gradle/
+build/
+captures/
+output.json
+
+# Local configuration file (SDK path, etc)
+local.properties
+
+# Gradle Wrapper
+**/gradle-wrapper.jar
+
+# === Android Studio ===
+.idea/
+*.iml
+*.iws
+*.hprof
+
+# === Kotlin / Java ===
+*.class
+*.jar
+*.war
+*.ear
+
+# === NDK / C++ ===
+.externalNativeBuild/
+.cxx/
+*.so
+*.o
+*.obj
+
+# CMake temporary files
+CMakeLists.txt.user
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# === OS / Misc ===
+*.log
+.DS_Store
+Thumbs.db
+
+# === Optional: Ignore test binaries if you keep cpp-core in repo ===
+cpp-core/cpp-core-build/
