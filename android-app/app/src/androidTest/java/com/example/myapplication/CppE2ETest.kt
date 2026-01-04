@@ -11,8 +11,8 @@ class CppE2ETest {
     @Test
     fun testIncrementWorks() {
         val input = 5
-        val expected = 6 // assuming your C++ adds 1
-        val result = MainActivity.testIncrement(input)
+        val expected = 7
+        val result = PhysicsAPI.testIncrement(input)
         assertEquals(expected, result)
     }
 }

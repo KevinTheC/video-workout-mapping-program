@@ -16,27 +16,12 @@ import com.example.myapplication.ui.theme.MyApplicationTheme
 
 class MainActivity : ComponentActivity() {
 
-    companion object {
-        init {
-            System.loadLibrary("android_wrapper_cpp")
-        }
-        @JvmStatic
-        external fun testIncrement(value: Int): Int
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)   // MUST be inside onCreate
 
         setContent {
             MyApplicationTheme {
-                // Just for testing
-                try {
-                    val result = testIncrement(5)
-                } catch (e: UnsatisfiedLinkError) {
-                    Log.e("JNI", "Linking failed: ${e.message}")
-                }
-                val result = testIncrement(5)   // call JNI
-                Text(text = "5 + 1 = $result")
+                Text(text = "5 + 1 = 6")
             }
         }
     }
