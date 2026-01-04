@@ -32,7 +32,7 @@ class CppE2ETest {
                 buffer,
                 4,
                 4,
-                1,
+                PhysicsAPI.FrameFormat.RGB,
             )
             PhysicsAPI.registerListener()
             PhysicsAPI.shutdown()
