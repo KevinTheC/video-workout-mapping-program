@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.12)
 
 project(cpp_core)
 
@@ -17,9 +17,19 @@ target_include_directories(
     PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
-#CREATE TESTS
-add_executable(test_core src/test.cpp)
-target_link_libraries(test_core PRIVATE cpp_core)
-enable_testing()
-add_test(NAME core_test
-         COMMAND $<TARGET_FILE:test_core>)
+# CREATE TESTS
+file(GLOB TEST_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp
+)
+
+foreach(test_src ${TEST_SOURCES})
+    get_filename_component(test_name ${test_src} NAME_WE)
+
+    add_executable(${test_name} ${test_src})
+    target_link_libraries(${test_name} PRIVATE cpp_core)
+
+    add_test(
+        NAME ${test_name}
+        COMMAND ${test_name}
+    )
+endforeach()

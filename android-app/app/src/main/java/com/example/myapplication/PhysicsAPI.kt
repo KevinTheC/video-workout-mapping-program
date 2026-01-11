@@ -10,11 +10,11 @@ class PhysicsAPI {
         @JvmStatic
         external fun testIncrement(value: Int): Int
         @JvmStatic
-        external fun initializeBuffer(maxFrames: Int): Boolean
+        external fun initializeBuffer(maxFrames: Int, height: Int, width: Int, format: Int): Boolean
+        inline fun initializeBuffer(maxFrames: Int, height: Int, width: Int, format: FrameFormat) =
+            initializeBuffer(maxFrames, height, width, format.ordinal)
         @JvmStatic
-        external fun submitFrame(frame: ByteBuffer, width: Int, height: Int, format: Int): Boolean
-        inline fun submitFrame(frame: ByteBuffer, width: Int, height: Int, format: FrameFormat) =
-            submitFrame(frame, width, height, format.ordinal)
+        external fun submitFrame(frame: ByteBuffer): Boolean
         @JvmStatic
         external fun shutdown(): Boolean
         @JvmStatic

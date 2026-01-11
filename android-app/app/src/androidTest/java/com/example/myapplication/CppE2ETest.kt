@@ -19,7 +19,7 @@ class CppE2ETest {
     @Test
     fun testCallingMethods() {
         try {
-            PhysicsAPI.initializeBuffer(1);
+            PhysicsAPI.initializeBuffer(1, 4, 4, 1);
 
             val frameSize = 4 * 4 * 3 // pretend RGB
             val buffer = ByteBuffer.allocateDirect(frameSize)
@@ -29,10 +29,7 @@ class CppE2ETest {
 
             // 3. Call submitFrame
             PhysicsAPI.submitFrame(
-                buffer,
-                4,
-                4,
-                PhysicsAPI.FrameFormat.RGB,
+                buffer
             )
             PhysicsAPI.registerListener()
             PhysicsAPI.shutdown()

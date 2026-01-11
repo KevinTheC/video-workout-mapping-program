@@ -1,3 +1,4 @@
 {
-    "cmake.sourceDirectory": "C:/Users/Kevin/code/video_mapper/cpp-core"
+    "cmake.sourceDirectory": "C:/Users/Kevin/code/video_mapper/cpp-core",
+    "C_Cpp.errorSquiggles": "disabled"
 }

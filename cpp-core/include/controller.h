@@ -1,22 +1,13 @@
 #pragma once
-#include <stdint.h>
-struct FrameFormat{
-    uint8_t width;
-    uint8_t height;
-    enum Format{
-        YUV420,
-        RGB,
-        RGBA
-    };
-    Format format;
-};
+#include <cstdint>
+#include "FrameBuffer.h"
 int testIncrement(int value){
     return value + 2;
 };
-bool initializeBuffer(int maxFrames){
+bool initializeBuffer(FrameFormat format, size_t maxFrames){
     return true;
 };
-bool submitFrame(uint8_t* bufferBegin, size_t length, FrameFormat format){
+bool submitFrame(uint8_t* bufferBegin, size_t length){
     return true;
 };
 bool shutdown(){

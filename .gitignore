@@ -40,6 +40,7 @@ Makefile
 *.log
 .DS_Store
 Thumbs.db
+*.lnk
 
 # === Optional: Ignore test binaries if you keep cpp-core in repo ===
 cpp-core/cpp-core-build/

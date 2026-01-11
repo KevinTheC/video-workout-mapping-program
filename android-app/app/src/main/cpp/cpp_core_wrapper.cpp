@@ -17,9 +17,17 @@ JNIEXPORT jboolean JNICALL
 Java_com_example_myapplication_PhysicsAPI_initializeBuffer(
         JNIEnv* env,
         jobject _,
-        jint maxFrames
+        jint maxFrames,
+        jint height,
+        jint width,
+        jint format
 ) {
-    return initializeBuffer(maxFrames);
+    return initializeBuffer(
+            FrameFormat{
+                static_cast<uint8_t>(height),
+                static_cast<uint8_t>(width),
+                static_cast<FrameFormat::Format>(format)},
+            static_cast<uint8_t>(maxFrames));
 }
 
 //@JvmStatic
@@ -29,17 +37,11 @@ JNIEXPORT jboolean JNICALL
 Java_com_example_myapplication_PhysicsAPI_submitFrame(
         JNIEnv* env,
         jobject _,
-        jobject frameBuffer,
-        jint width,
-        jint height,
-        jint format
+        jobject frameBuffer
 ) {
     uint8_t* begin = static_cast<uint8_t*>(env->GetDirectBufferAddress(frameBuffer));
     size_t capacity = env->GetDirectBufferCapacity(frameBuffer);
-    return submitFrame(begin, capacity, FrameFormat{
-        static_cast<uint8_t>(width),
-        static_cast<uint8_t>(height),
-        static_cast<FrameFormat::Format>(format)});
+    return submitFrame(begin, capacity);
 }
 //@JvmStatic
 //        external fun shutdown(): Boolean
