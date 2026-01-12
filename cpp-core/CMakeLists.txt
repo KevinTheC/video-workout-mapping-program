@@ -17,6 +17,7 @@ target_include_directories(
     PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
+enable_testing()
 # CREATE TESTS
 file(GLOB TEST_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp

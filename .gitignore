@@ -43,4 +43,6 @@ Thumbs.db
 *.lnk
 
 # === Optional: Ignore test binaries if you keep cpp-core in repo ===
-cpp-core/cpp-core-build/
+cpp-core/build/
+
+.vscode
