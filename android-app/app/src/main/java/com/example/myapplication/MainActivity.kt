@@ -13,6 +13,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.myapplication.ui.theme.MyApplicationTheme
+import com.google.mediapipe.tasks.core.BaseOptions
+import com.google.mediapipe.tasks.vision.core.RunningMode
+import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
 
 class MainActivity : ComponentActivity() {
 
@@ -25,6 +28,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
 }
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {

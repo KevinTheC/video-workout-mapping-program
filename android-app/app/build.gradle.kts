@@ -23,6 +23,9 @@ android {
                 cppFlags.add("-std=c++17")
             }
         }
+        ndk {
+            abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86_64"))
+        }
     }
 
     externalNativeBuild {
@@ -52,6 +55,9 @@ android {
 }
 
 dependencies {
+    implementation("com.google.mediapipe:tasks-vision:0.20230731")
+
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
