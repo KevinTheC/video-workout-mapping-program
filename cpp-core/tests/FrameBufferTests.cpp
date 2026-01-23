@@ -3,10 +3,9 @@
 #include <tuple>
 #include <FrameBuffer.h>
 #include <iostream>
-#define getFormat() FrameFormat{1,1, FrameFormat::Format::RGB}
-#define getBuffer() std::vector<uint8_t>(3)
 void testOrderingOfCalls();
 void testCalls(std::function<bool()>,bool,const char*);
+float buf[FRAME_SIZE];
 int main() {
     testOrderingOfCalls();
 };
@@ -15,64 +14,64 @@ void testOrderingOfCalls(){
 
     std::vector<Test> tests = {
         //default constructor
-        {[](){return FrameBuffer().initialize(getFormat(), 1);}, true, "Initialization failed after default constructor"},
+        {[](){return FrameBuffer().initialize(1);}, true, "Initialization failed after default constructor"},
         {[](){return FrameBuffer().shutdown();}, false, "Shutdown occured with uninitialized buffer after default constructor"},
-        {[](){return FrameBuffer().submitFrame(getBuffer().data(), 3);}, false, "Frame submission occured with uninitialized buffer after default constructor"},
+        {[](){return FrameBuffer().submitFrame(buf, FRAME_SIZE);}, false, "Frame submission occured with uninitialized buffer after default constructor"},
         
         //frame submission
         {[](){
             FrameBuffer fb;
-            fb.initialize(getFormat(), 1);
-            return fb.submitFrame(getBuffer().data(), 3);
+            fb.initialize(1);
+            return fb.submitFrame(buf, FRAME_SIZE);
         }, true, "Frame submission after init failed"},
         {[](){
             FrameBuffer fb;
-            fb.initialize(getFormat(), 1);
+            fb.initialize(1);
             fb.shutdown();
-            return fb.submitFrame(getBuffer().data(), 3);
+            return fb.submitFrame(buf, FRAME_SIZE);
         }, false, "Frame submission after shutdown succeeded"},
         {[](){
             FrameBuffer fb;
-            fb.initialize(getFormat(), 2);
-            fb.submitFrame(getBuffer().data(), 3);
-            return fb.submitFrame(getBuffer().data(), 3);
+            fb.initialize(2);
+            fb.submitFrame(buf, FRAME_SIZE);
+            return fb.submitFrame(buf, FRAME_SIZE);
         }, true, "Consecutive frame submissions failed"},
 
         //initialization
         {[](){
             FrameBuffer fb;
-            fb.initialize(getFormat(), 1);
-            return fb.initialize(getFormat(), 1);
+            fb.initialize(1);
+            return fb.initialize(1);
         }, false, "Double initialization succeeded"},
         {[](){
             FrameBuffer fb;
-            fb.initialize(getFormat(), 1);
+            fb.initialize(1);
             fb.shutdown();
-            return fb.initialize(getFormat(), 1);
+            return fb.initialize(1);
         }, true, "Initialize after shutdown failed"},
         {[](){
             FrameBuffer fb;
-            fb.initialize(getFormat(), 1);
-            fb.submitFrame(getBuffer().data(), 3);
-            return fb.initialize(getFormat(), 1);
+            fb.initialize(1);
+            fb.submitFrame(buf, FRAME_SIZE);
+            return fb.initialize(1);
         }, false, "Initialize after frame submission succeeded"},
 
         //shutdown
         {[](){
             FrameBuffer fb;
-            fb.initialize(getFormat(), 1);
+            fb.initialize(1);
             return fb.shutdown();
         }, true, "Shutdown after init failed"},
         {[](){
             FrameBuffer fb;
-            fb.initialize(getFormat(), 1);
+            fb.initialize(1);
             fb.shutdown();
             return fb.shutdown();;
         }, false, "Double shutdown succeeded"},
         {[](){
             FrameBuffer fb;
-            fb.initialize(getFormat(), 1);
-            fb.submitFrame(getBuffer().data(), 3);
+            fb.initialize(1);
+            fb.submitFrame(buf, FRAME_SIZE);
             return fb.shutdown();
         }, true, "Shutdown after frame submission failed"}
     };

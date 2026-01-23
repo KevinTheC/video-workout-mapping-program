@@ -19,12 +19,11 @@ class CppE2ETest {
     @Test
     fun testCallingMethods() {
         try {
-            PhysicsAPI.initializeBuffer(1, 4, 4, 1);
-
-            val frameSize = 4 * 4 * 3 // pretend RGB
+            PhysicsAPI.initializeBuffer(1);
+            val frameSize = 33 * 4 * 4
             val buffer = ByteBuffer.allocateDirect(frameSize)
-            for (i in 0 until frameSize) {
-                buffer.put(i, (i % 256).toByte())
+            for (i in 0 until frameSize / 4) {
+                buffer.putFloat(0.0f)
             }
 
             // 3. Call submitFrame

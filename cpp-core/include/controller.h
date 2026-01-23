@@ -4,10 +4,10 @@
 int testIncrement(int value){
     return value + 2;
 };
-bool initializeBuffer(FrameFormat format, size_t maxFrames){
+bool initializeBuffer(size_t maxFrames){
     return true;
 };
-bool submitFrame(uint8_t* bufferBegin, size_t length){
+bool submitFrame(float* bufferBegin, size_t size){
     return true;
 };
 bool shutdown(){
@@ -15,4 +15,7 @@ bool shutdown(){
 };
 bool registerListener(){
     return true;
+};
+void setResistanceOrigin(uint8_t* bufferBegin, bool isBilateral, float x1, float y1, float x2, float y2){
+
 };

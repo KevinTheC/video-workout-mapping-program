@@ -1,5 +1,7 @@
 #include <jni.h>
 #include "controller.h"
+#include <array>
+#define FRAME_SIZE 33 * 4
 
 extern "C"
 JNIEXPORT jint JNICALL
@@ -17,17 +19,9 @@ JNIEXPORT jboolean JNICALL
 Java_com_example_myapplication_PhysicsAPI_initializeBuffer(
         JNIEnv* env,
         jobject _,
-        jint maxFrames,
-        jint height,
-        jint width,
-        jint format
+        jint maxFrames
 ) {
-    return initializeBuffer(
-            FrameFormat{
-                static_cast<uint8_t>(height),
-                static_cast<uint8_t>(width),
-                static_cast<FrameFormat::Format>(format)},
-            static_cast<uint8_t>(maxFrames));
+    return initializeBuffer(static_cast<size_t>(maxFrames));
 }
 
 //@JvmStatic
@@ -39,9 +33,11 @@ Java_com_example_myapplication_PhysicsAPI_submitFrame(
         jobject _,
         jobject frameBuffer
 ) {
-    uint8_t* begin = static_cast<uint8_t*>(env->GetDirectBufferAddress(frameBuffer));
-    size_t capacity = env->GetDirectBufferCapacity(frameBuffer);
-    return submitFrame(begin, capacity);
+    if (env->GetDirectBufferCapacity(frameBuffer) != sizeof(float) * FRAME_SIZE) {
+        return false;
+    }
+    auto begin = static_cast<float*>(env->GetDirectBufferAddress(frameBuffer));
+    return submitFrame(begin, env->GetDirectBufferCapacity(frameBuffer) / 4);
 }
 //@JvmStatic
 //        external fun shutdown(): Boolean
@@ -53,7 +49,19 @@ Java_com_example_myapplication_PhysicsAPI_shutdown(
 ) {
     return shutdown();
 }
+extern "C" JNIEXPORT void JNICALL
+Java_com_example_myapplication_PhysicsAPI_setResistanceOrigin(
+        JNIEnv* env,
+        jobject _,
+        jobject frameBuffer,
+        jboolean isBilateral,
+        jfloat x1,
+        jfloat y1,
+        jfloat x2,
+        jfloat y2
+        ) {
 
+}
 //@JvmStatic
 ////need to add a listener class when I learn how to do it
 //external fun registerListener(): Boolean

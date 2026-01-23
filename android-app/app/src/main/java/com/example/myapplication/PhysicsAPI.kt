@@ -10,11 +10,15 @@ class PhysicsAPI {
         @JvmStatic
         external fun testIncrement(value: Int): Int
         @JvmStatic
-        external fun initializeBuffer(maxFrames: Int, height: Int, width: Int, format: Int): Boolean
-        inline fun initializeBuffer(maxFrames: Int, height: Int, width: Int, format: FrameFormat) =
-            initializeBuffer(maxFrames, height, width, format.ordinal)
+        external fun initializeBuffer(maxFrames: Int): Boolean
         @JvmStatic
         external fun submitFrame(frame: ByteBuffer): Boolean
+        @JvmStatic
+        external fun setResistanceOrigin(frame: ByteBuffer, isBilateral: Boolean, x1 : Float, y1 : Float, x2: Float, y2: Float)
+        inline fun setResistanceOrigin(frame: ByteBuffer, x1 : Float, y1 : Float) =
+            setResistanceOrigin(frame, false, x1, y1, 0f, 0f)
+        inline fun setResistanceOrigin(frame: ByteBuffer, x1 : Float, y1 : Float, x2: Float, y2: Float) =
+            setResistanceOrigin(frame, true, x1, y1, x2, y2)
         @JvmStatic
         external fun shutdown(): Boolean
         @JvmStatic
