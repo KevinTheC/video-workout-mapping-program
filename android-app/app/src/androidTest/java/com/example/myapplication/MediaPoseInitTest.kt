@@ -27,17 +27,13 @@ class MediaPoseInitTest {
         val baseOptions = BaseOptions.builder()
             .setModelAssetPath("pose_landmarker_full.task")
             .build()
-
         val options = PoseLandmarker.PoseLandmarkerOptions.builder()
             .setBaseOptions(baseOptions)
             .setRunningMode(RunningMode.LIVE_STREAM)
             .setResultListener { result, inputImage ->
-                // Handle your 33 pose landmarks here!
                 val landmarks = result.landmarks()
-
             }
             .build()
-
         val poseLandmarker = PoseLandmarker.createFromOptions(InstrumentationRegistry.getInstrumentation().targetContext, options)
     }
 }

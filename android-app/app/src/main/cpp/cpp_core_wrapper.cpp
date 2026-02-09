@@ -1,7 +1,6 @@
 #include <jni.h>
 #include "controller.h"
 #include <array>
-#define FRAME_SIZE 33 * 4
 
 extern "C"
 JNIEXPORT jint JNICALL

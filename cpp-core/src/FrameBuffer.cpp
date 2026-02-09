@@ -37,3 +37,7 @@ FrameBuffer::FrameBuffer() {
     this->buffer = std::vector<float>(0);
     this->nextFrame = 0;
 };
+
+size_t const FrameBuffer::getFrameCount(){
+    return nextFrame / FRAME_SIZE;
+};

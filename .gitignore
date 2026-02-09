@@ -16,6 +16,11 @@ local.properties
 *.iws
 *.hprof
 
+# === Resources ===
+
+android-app/app/src/androidTest/assets/*
+android-app/app/src/androidTest/resources/*
+
 # === Kotlin / Java ===
 *.class
 *.jar
