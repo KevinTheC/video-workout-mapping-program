@@ -14,7 +14,7 @@ class PhysicsAPI {
         @JvmStatic
         external fun submitFrame(frame: ByteBuffer): Boolean
         @JvmStatic
-        external fun setResistanceOrigin(frame: ByteBuffer, isBilateral: Boolean, x1 : Float, y1 : Float, x2: Float, y2: Float)
+        external fun setResistanceOrigin(frame: ByteBuffer, isBilateral: Boolean, x1 : Float, y1 : Float, x2: Float, y2: Float): Unit
         inline fun setResistanceOrigin(frame: ByteBuffer, x1 : Float, y1 : Float) =
             setResistanceOrigin(frame, false, x1, y1, 0f, 0f)
         inline fun setResistanceOrigin(frame: ByteBuffer, x1 : Float, y1 : Float, x2: Float, y2: Float) =
@@ -23,7 +23,11 @@ class PhysicsAPI {
         external fun shutdown(): Boolean
         @JvmStatic
         //need to add a listener class when I learn how to do it
-        external fun registerListener(): Boolean
+        external fun registerListener(listener: (FrameUpdateResponse)-> Unit, responseClass: Class<FrameUpdateResponse>): Unit
+        inline fun registerListener(noinline listener: (FrameUpdateResponse)-> Unit) =
+            registerListener(listener, FrameUpdateResponse::class.java)
+        @JvmStatic
+        external fun deleteListener(): Unit
     }
     enum class FrameFormat{
         YUV420,

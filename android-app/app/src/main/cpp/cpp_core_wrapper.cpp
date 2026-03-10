@@ -1,5 +1,5 @@
 #include <jni.h>
-#include "controller.h"
+#include "jvmcontroller.h"
 #include <array>
 
 extern "C"
@@ -60,15 +60,4 @@ Java_com_example_myapplication_PhysicsAPI_setResistanceOrigin(
         jfloat y2
         ) {
 
-}
-//@JvmStatic
-////need to add a listener class when I learn how to do it
-//external fun registerListener(): Boolean
-extern "C"
-JNIEXPORT jboolean JNICALL
-Java_com_example_myapplication_PhysicsAPI_registerListener(
-        JNIEnv* env,
-        jobject _
-) {
-    return registerListener();
 }

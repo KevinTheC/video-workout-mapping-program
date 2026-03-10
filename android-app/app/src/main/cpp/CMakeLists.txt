@@ -13,6 +13,7 @@ add_library(
         android_wrapper_cpp
         SHARED
         cpp_core_wrapper.cpp
+        cpp_listener_wrapper.cpp
 )
 
 #uses the name defined in add_library and defines the include

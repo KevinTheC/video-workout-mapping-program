@@ -30,7 +30,8 @@ class CppE2ETest {
             PhysicsAPI.submitFrame(
                 buffer
             )
-            PhysicsAPI.registerListener()
+            PhysicsAPI.registerListener {}
+            PhysicsAPI.deleteListener()
             PhysicsAPI.shutdown()
         } catch (e : Exception) {
             assert(false, { "Exception thrown while calling some PhysicsAPI method" })

@@ -1,5 +1,7 @@
 package com.example.myapplication
 
+import android.graphics.Bitmap
+import android.util.Log
 import android.media.MediaMetadataRetriever
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -50,7 +52,7 @@ class BicepCurlAngleTest {
 
             // Now you can extract frames or metadata
             val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-            println("Video duration: $duration ms")
+            Log.d("PhysicsTest", "Video duration: $duration ms")
             assetFileDescriptor.close()
 
             // Get the total duration of the video in microseconds
@@ -60,15 +62,22 @@ class BicepCurlAngleTest {
 
             // 1000ms / 30fps = 33.33ms
             val frameIntervalMs = 33L
-            PhysicsAPI.initializeBuffer(900);
+            PhysicsAPI.initializeBuffer(900)
+            PhysicsAPI.registerListener { response: FrameUpdateResponse ->
+                Log.d("PhysicsTest", "Angle: $response.angle")
+            }
             for (timestampMs in 0 until durationMs step frameIntervalMs) {
 
                 // get bitmap
                 // Note: getFrameAtTime takes MICROseconds (ms * 1000)
-                val bitmap = retriever.getFrameAtTime(
+                val rawBitmap = retriever.getFrameAtTime(
                     timestampMs * 1000,
                     MediaMetadataRetriever.OPTION_CLOSEST_SYNC
                 )
+
+                // Convert to ARGB_8888 if it isn't already
+                val bitmap = rawBitmap?.copy(Bitmap.Config.ARGB_8888, false)
+                    ?: throw IllegalStateException("Could not retrieve frame")
 
                 if (bitmap != null) {
                     // 2. Convert the Android/JVM Bitmap into a MediaPipe Image
@@ -76,26 +85,33 @@ class BicepCurlAngleTest {
 
                     // 3. Submit to Landmarker (blocking version because we are submitting video not live_stream
                     val result = poseLandmarker.detectForVideo(mpImage, timestampMs).landmarks()
-
+                    if (result.isEmpty()) continue
                     val floatList: List<Float> = result.flatMap { list ->
                         list.flatMap { landmark ->
                             listOf(landmark.x(), landmark.y(), landmark.z())
                         }
                     }
 
-                    val frameSize = 33 * 3
+                    val frameSize = floatList.size * Float.SIZE_BYTES
                     val buffer = ByteBuffer.allocateDirect(frameSize)
+                    if (!buffer.isDirect) {
+                        assert(false, {"Buffer MUST be direct!"})
+                    }
+                    if (buffer.capacity() == 0) {
+                        assert(false, {"Buffer is empty!"})
+                    }
                     for (f in floatList) {
                         buffer.putFloat(f)
-                    }
+                    }//buffer overflow??
                     PhysicsAPI.submitFrame(
                         buffer
                     )
+                    Log.d("PhysicsTest", "One submission complete")
                 }
             }
             PhysicsAPI.shutdown()
         } catch (e: Exception) {
-            e.printStackTrace()
+            assert(false, {e.stackTraceToString()})
         } finally {
             retriever.release()
         }
