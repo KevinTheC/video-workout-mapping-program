@@ -14,6 +14,7 @@ add_library(
         SHARED
         cpp_core_wrapper.cpp
         cpp_listener_wrapper.cpp
+        cpp_global.cpp
 )
 
 #uses the name defined in add_library and defines the include

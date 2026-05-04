@@ -1,4 +1,6 @@
 #pragma once
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/glm.hpp>
 #include <cstdlib>
 #include <array>
 #include <cstdint>
@@ -7,22 +9,46 @@
 #include <memory>
 #include <algorithm>
 #define FRAME_SIZE 99
-struct FrameUpdateData{
-    float angle;
-};
 class FrameUpdateObserver{
     public:
         virtual ~FrameUpdateObserver() {}
-        virtual void onFrameUpdate(FrameUpdateData fud) = 0;
+        virtual void onFrameUpdate(uintptr_t handle) = 0;
+};
+struct JointState{
+    float flexion;
+    float adduction;
+    float rotation;
+};
+struct BodySide {
+    JointState shoulder;
+    JointState elbow;
+    JointState hip;
+    JointState knee;
+    JointState ankle;
+    JointState wrist;
+    float shoulderHipDiff;
+    float shoulderEarDiff;
+    float femur;
+    float torso;
+};
+struct BodyState{
+    BodySide left;
+    BodySide right;
 };
 class FrameBuffer{
     public:
         FrameBuffer();
         bool shutdown();
         bool initialize(size_t maxFrames);
-        bool submitFrame(float* bufferBegin, size_t count);
+        bool submitFrame(float* bufferBegin, size_t numFloats);
         size_t const getFrameCount();
+        BodyState getState(size_t index);
+        BodyState getState();
+        void assignFrameUpdateObserver(FrameUpdateObserver* frameUpdateObserver);
+        bool destroyFrameUpdateObserver();
         enum JointOffset {
+            LeftEar = 7,
+            RightEar,
             LeftShoulder = 11,
             RightShoulder,
             LeftElbow,
@@ -46,8 +72,6 @@ class FrameBuffer{
             LeftIndexToe,
             RightIndexToe
         };
-        void assignFrameUpdateObserver(FrameUpdateObserver* frameUpdateObserver);
-        bool destroyFrameUpdateObserver();
     private:
         size_t maxFrames;
         std::vector<float> buffer;

@@ -1,17 +1,17 @@
 cmake_minimum_required(VERSION 3.12)
 
-# include(FetchContent)
-
-# FetchContent_Declare(
-#   glm
-#   GIT_REPOSITORY https://github.com/g-truc/glm.git
-#   GIT_TAG        master
-# )
-
-# FetchContent_MakeAvailable(glm)
-# target_link_libraries(main PRIVATE glm::glm)
+include(FetchContent)
 
 project(cpp_core)
+
+FetchContent_Declare(
+	glm
+	GIT_REPOSITORY	https://github.com/g-truc/glm.git
+	GIT_TAG 	0af55ccecd98d4e5a8d1fad7de25ba429d60e863 #refs/tags/1.0.1
+)
+
+FetchContent_MakeAvailable(glm)
+
 
 file(GLOB CORE_SOURCES
     src/*.cpp
@@ -22,6 +22,8 @@ add_library(
     STATIC
     ${CORE_SOURCES}
 )
+
+target_link_libraries(cpp_core PUBLIC glm::glm)
 
 target_include_directories(
     cpp_core

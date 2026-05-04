@@ -13,6 +13,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 @RunWith(AndroidJUnit4::class)
 class BicepCurlAngleTest {
@@ -28,6 +29,7 @@ class BicepCurlAngleTest {
     }
     @Test
     fun testBicepCurlAngle() {
+        PhysicsAPI.Companion.CppLoggerBridge.initCppLogger()
         //use a predetermined clip to test
         val baseOptions = BaseOptions.builder()
             .setModelAssetPath("pose_landmarker_full.task")
@@ -45,8 +47,8 @@ class BicepCurlAngleTest {
         val context = InstrumentationRegistry.getInstrumentation().context
 
         val retriever = MediaMetadataRetriever()
-        try {
-            val assetFileDescriptor = context.assets.openFd("bicepcurl.mp4")
+        try {//
+            val assetFileDescriptor = context.assets.openFd("wristsupination.mp4")
 
             retriever.setDataSource(assetFileDescriptor.fileDescriptor, assetFileDescriptor.startOffset, assetFileDescriptor.length)
 
@@ -64,7 +66,7 @@ class BicepCurlAngleTest {
             val frameIntervalMs = 33L
             PhysicsAPI.initializeBuffer(900)
             PhysicsAPI.registerListener { response: FrameUpdateResponse ->
-                Log.d("PhysicsTest", "Angle: $response.angle")
+                Log.d("PhysicsTest", "Angle: ${response.extra.contentToString()}")
             }
             for (timestampMs in 0 until durationMs step frameIntervalMs) {
 
@@ -94,6 +96,7 @@ class BicepCurlAngleTest {
 
                     val frameSize = floatList.size * Float.SIZE_BYTES
                     val buffer = ByteBuffer.allocateDirect(frameSize)
+                    buffer.order(ByteOrder.nativeOrder())
                     if (!buffer.isDirect) {
                         assert(false, {"Buffer MUST be direct!"})
                     }
@@ -102,7 +105,8 @@ class BicepCurlAngleTest {
                     }
                     for (f in floatList) {
                         buffer.putFloat(f)
-                    }//buffer overflow??
+                    }
+
                     PhysicsAPI.submitFrame(
                         buffer
                     )

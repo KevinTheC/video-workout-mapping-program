@@ -1,6 +1,23 @@
 #include <jni.h>
 #include "jvmcontroller.h"
+#include "cpp_global.h"
+#include <sstream>
+#include <iomanip>
 #include <array>
+#include "Logger.h"
+
+extern "C" JNIEXPORT void JNICALL Java_com_example_myapplication_PhysicsAPI_initCppLogger(
+        JNIEnv* env,
+        jobject _,
+        jobject bridge
+        ){
+    jobject loggerGlobalRef = env->NewGlobalRef(bridge);
+    jclass bridgeLocalClass = env->GetObjectClass(loggerGlobalRef);
+    jclass bridgePermClass = (jclass)env->NewGlobalRef(bridgeLocalClass);
+    env->DeleteLocalRef(bridgeLocalClass);
+    jmethodID logMethodID = env->GetStaticMethodID(bridgePermClass, "logFromCpp", "(Ljava/lang/String;)V");
+    publicAccessLogger.activate(bridgePermClass, logMethodID, g_vm);
+}
 
 extern "C"
 JNIEXPORT jint JNICALL
@@ -11,7 +28,6 @@ JNIEXPORT jint JNICALL
 ) {
     return testIncrement(value);
 }
-//@JvmStatic
 //        external fun initializeBuffer(maxFrames: Int): Boolean
 extern "C"
 JNIEXPORT jboolean JNICALL
@@ -22,9 +38,7 @@ Java_com_example_myapplication_PhysicsAPI_initializeBuffer(
 ) {
     return initializeBuffer(static_cast<size_t>(maxFrames));
 }
-
-//@JvmStatic
-//        external fun submitFrame(frame: ByteBuffer, metadata: FrameMetaData): Boolean
+//external fun submitFrame(frame: ByteBuffer, metadata: FrameMetaData): Boolean
 extern "C"
 JNIEXPORT jboolean JNICALL
 Java_com_example_myapplication_PhysicsAPI_submitFrame(
@@ -35,11 +49,9 @@ Java_com_example_myapplication_PhysicsAPI_submitFrame(
     if (env->GetDirectBufferCapacity(frameBuffer) != sizeof(float) * FRAME_SIZE) {
         return false;
     }
-    auto begin = static_cast<float*>(env->GetDirectBufferAddress(frameBuffer));
+    float* begin = reinterpret_cast<float*>(env->GetDirectBufferAddress(frameBuffer));
     return submitFrame(begin, env->GetDirectBufferCapacity(frameBuffer) / 4);
 }
-//@JvmStatic
-//        external fun shutdown(): Boolean
 extern "C"
 JNIEXPORT jboolean JNICALL
 Java_com_example_myapplication_PhysicsAPI_shutdown(
@@ -61,3 +73,9 @@ Java_com_example_myapplication_PhysicsAPI_setResistanceOrigin(
         ) {
 
 }
+extern "C" JNIEXPORT void JNICALL
+Java_com_example_myapplication_PhysicsAPI_logFromCpp(
+        JNIEnv* env,
+        jobject _,
+        jstring str
+        ){}

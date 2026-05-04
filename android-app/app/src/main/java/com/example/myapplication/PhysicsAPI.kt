@@ -28,6 +28,19 @@ class PhysicsAPI {
             registerListener(listener, FrameUpdateResponse::class.java)
         @JvmStatic
         external fun deleteListener(): Unit
+
+        object CppLoggerBridge {
+            @JvmStatic
+            fun logFromCpp(message: String) {
+                android.util.Log.d("CPP_LOG", message)
+            }
+            // This is the function you actually call from your code
+            fun initCppLogger() {
+                initCppLogger(this)
+            }
+        }
+        @JvmStatic
+        private external fun initCppLogger(logger: CppLoggerBridge) : Unit
     }
     enum class FrameFormat{
         YUV420,
