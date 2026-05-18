@@ -14,110 +14,40 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import kotlin.collections.contentToString
+import kotlin.text.get
 
 @RunWith(AndroidJUnit4::class)
 class BicepCurlAngleTest {
-    companion object {
-        init {
-            try {
-                System.loadLibrary("mediapipe_tasks_vision_jni")
-            } catch (e: UnsatisfiedLinkError) {
-                // Log it so you can see if it's still failing here
-                println("Native library failed to load: $e")
-            }
-        }
-    }
     @Test
     fun testBicepCurlAngle() {
-        PhysicsAPI.Companion.CppLoggerBridge.initCppLogger()
-        //use a predetermined clip to test
-        val baseOptions = BaseOptions.builder()
-            .setModelAssetPath("pose_landmarker_full.task")
-            .build()
-
-        val options = PoseLandmarker.PoseLandmarkerOptions.builder()
-            .setBaseOptions(baseOptions)
-            .setRunningMode(RunningMode.VIDEO)
-            //in video mode, the landmarks are returned immediately because its a blocking function
-            //livestream mode will drop frames
-            .build()
-
-        val poseLandmarker = PoseLandmarker.createFromOptions(InstrumentationRegistry.getInstrumentation().targetContext, options)
-
-        val context = InstrumentationRegistry.getInstrumentation().context
-
-        val retriever = MediaMetadataRetriever()
-        try {//
-            val assetFileDescriptor = context.assets.openFd("wristsupination.mp4")
-
-            retriever.setDataSource(assetFileDescriptor.fileDescriptor, assetFileDescriptor.startOffset, assetFileDescriptor.length)
-
-            // Now you can extract frames or metadata
-            val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-            Log.d("PhysicsTest", "Video duration: $duration ms")
-            assetFileDescriptor.close()
-
-            // Get the total duration of the video in microseconds
-            val durationStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-            val durationMs = durationStr?.toLong() ?: 0L
-
-
-            // 1000ms / 30fps = 33.33ms
-            val frameIntervalMs = 33L
-            PhysicsAPI.initializeBuffer(900)
-            PhysicsAPI.registerListener { response: FrameUpdateResponse ->
-                Log.d("PhysicsTest", "Angle: ${response.extra.contentToString()}")
-            }
-            for (timestampMs in 0 until durationMs step frameIntervalMs) {
-
-                // get bitmap
-                // Note: getFrameAtTime takes MICROseconds (ms * 1000)
-                val rawBitmap = retriever.getFrameAtTime(
-                    timestampMs * 1000,
-                    MediaMetadataRetriever.OPTION_CLOSEST_SYNC
-                )
-
-                // Convert to ARGB_8888 if it isn't already
-                val bitmap = rawBitmap?.copy(Bitmap.Config.ARGB_8888, false)
-                    ?: throw IllegalStateException("Could not retrieve frame")
-
-                if (bitmap != null) {
-                    // 2. Convert the Android/JVM Bitmap into a MediaPipe Image
-                    val mpImage = BitmapImageBuilder(bitmap).build()
-
-                    // 3. Submit to Landmarker (blocking version because we are submitting video not live_stream
-                    val result = poseLandmarker.detectForVideo(mpImage, timestampMs).landmarks()
-                    if (result.isEmpty()) continue
-                    val floatList: List<Float> = result.flatMap { list ->
-                        list.flatMap { landmark ->
-                            listOf(landmark.x(), landmark.y(), landmark.z())
-                        }
-                    }
-
-                    val frameSize = floatList.size * Float.SIZE_BYTES
-                    val buffer = ByteBuffer.allocateDirect(frameSize)
-                    buffer.order(ByteOrder.nativeOrder())
-                    if (!buffer.isDirect) {
-                        assert(false, {"Buffer MUST be direct!"})
-                    }
-                    if (buffer.capacity() == 0) {
-                        assert(false, {"Buffer is empty!"})
-                    }
-                    for (f in floatList) {
-                        buffer.putFloat(f)
-                    }
-
-                    PhysicsAPI.submitFrame(
-                        buffer
-                    )
-                    Log.d("PhysicsTest", "One submission complete")
-                }
-            }
-            PhysicsAPI.shutdown()
-        } catch (e: Exception) {
-            assert(false, {e.stackTraceToString()})
-        } finally {
-            retriever.release()
-        }
+        SampleVideoTest.Companion.SampleVideoTestFunction("wristsupination1.mp4",
+            SampleVideoTest.SampleHandler({x,y->
+                x.getData().add(floatArrayOf(y.extra[3], y.extra[4], y.extra[6], y.extra[7], y.extra[9], y.extra[10]))
+                "State OK" to true
+                                          }, {x->
+                                              Log.d("BicepCurlTest", x.getData().joinToString(
+                                                  separator = ",",
+                                                  prefix = "[",
+                                                  postfix = "]"
+                                              ) { array ->
+                                                  array.slice(0..1).joinToString(separator = ",", prefix = "[", postfix = "]")
+                                              })
+                Log.d("BicepCurlTest", x.getData().joinToString(
+                    separator = ",",
+                    prefix = "[",
+                    postfix = "]"
+                ) { array ->
+                    array.slice(2..3).joinToString(separator = ",", prefix = "[", postfix = "]")
+                })
+                Log.d("BicepCurlTest", x.getData().joinToString(
+                    separator = ",",
+                    prefix = "[",
+                    postfix = "]"
+                ) { array ->
+                    array.slice(4..5).joinToString(separator = ",", prefix = "[", postfix = "]")
+                })
+            })
+        )
     }
 }
