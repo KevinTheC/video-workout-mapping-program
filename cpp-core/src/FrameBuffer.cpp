@@ -112,85 +112,130 @@ bool FrameBuffer::destroyFrameUpdateObserver() {
     this->frameUpdateObserver = nullptr;
     return true;
 };
-BodyState FrameBuffer::getState(size_t index) {
+const BodyState FrameBuffer::getState(size_t index) {
     if (index + 1 > getFrameCount())
         throw std::out_of_range("Tried retrieving state from a non-existant frame");
+    BodyState returnState;
     //this will definitely need to be changed to builder pattern, i dont know if compiler will be able to optimize this garbage return statement bs
-    glm::vec3 elbowToHand = 
-        getLandmark(buffer, JointOffset::LeftElbow, index) -
-        getLandmark(buffer, JointOffset::LeftWrist, index);
-    glm::vec3 elbowToShoulder =
-        getLandmark(buffer, JointOffset::LeftElbow, index) -
-        getLandmark(buffer, JointOffset::LeftShoulder, index);
-    glm::vec3 shoulderToShoulder = 
-        getLandmark(buffer, JointOffset::LeftShoulder, index) -
-        getLandmark(buffer, JointOffset::RightShoulder, index);
-    glm::vec3 shoulderToHip = 
-        getLandmark(buffer, JointOffset::LeftShoulder, index) -
-        getLandmark(buffer, JointOffset::LeftHip, index);
-    glm::vec3 hipToKnee = 
-        getLandmark(buffer, JointOffset::LeftHip, index) -
-        getLandmark(buffer, JointOffset::LeftKnee, index);
-    glm::vec3 hipToHip = 
-        getLandmark(buffer, JointOffset::LeftHip, index) -
-        getLandmark(buffer, JointOffset::RightHip, index);
-    glm::vec3 kneeToAnkle = 
-        getLandmark(buffer, JointOffset::LeftKnee, index) -
-        getLandmark(buffer, JointOffset::LeftAnkle, index);
-    glm::vec3 ankleToFoot =
-        getLandmark(buffer, JointOffset::LeftAnkle, index) -
-        getLandmark(buffer, JointOffset::LeftIndexToe, index);
-    glm::vec3 shoulderLocalXTransverse = 
-        glm::normalize(shoulderToShoulder - (glm::dot(shoulderToShoulder, elbowToShoulder)) * elbowToShoulder);
-    glm::vec3 hipLocalXTransverse = 
-        glm::normalize(hipToHip - (glm::dot(hipToHip, hipToKnee)) * hipToKnee);
-    glm::vec3 kneeLocalXTransverse =
-        glm::normalize(hipToHip - (glm::dot(hipToHip, ankleToFoot)) * ankleToFoot);
-    //a lot of these cross products will need to be checked to make sure they make sense for both right and left
-    //they are definitely wrong, left hand rule
-    //also, 0.0f is placeholders while NAN is indeterminate
-    //I think the arctan method is probably more effective than doing dot product, and makes more sense. maybe thats why the wrist joint wasn't working too
-    //also can definitely strip some normalization spam
-    float basis = glm::length(shoulderToShoulder);
-    return BodyState{
-        BodySide{
-            JointState{//shoulder joint
-                glm::dot(glm::normalize(elbowToShoulder), glm::normalize(glm::cross(shoulderToShoulder, shoulderToHip)))
-                glm::dot(glm::normalize(elbowToShoulder), glm::normalize(shoulderToShoulder)),
+    //we can use a value to invert all the values for L/R
+    for (size_t leftToRight = 0; leftToRight < 2; ++leftToRight){
+        BodySide side = leftToRight ? returnState.right : returnState.left;
+        glm::vec3 shoulderToShoulder = 
+            getLandmark(buffer, JointOffset::LeftShoulder + (1 * leftToRight), index) -
+            getLandmark(buffer, JointOffset::RightShoulder + (-1 * leftToRight), index);
+        glm::vec3 shoulderToHip = 
+            getLandmark(buffer, JointOffset::LeftShoulder + leftToRight, index) -
+            getLandmark(buffer, JointOffset::LeftHip + leftToRight, index);
+        glm::vec3 hipToKnee = 
+            getLandmark(buffer, JointOffset::LeftHip + leftToRight, index) -
+            getLandmark(buffer, JointOffset::LeftKnee + leftToRight, index);
+        glm::vec3 earToShoulder =
+            getLandmark(buffer, JointOffset::LeftEar + leftToRight, index) -
+            getLandmark(buffer, JointOffset::LeftShoulder + leftToRight, index);
+        float basis = glm::length(shoulderToShoulder);
+        side.torso = glm::length(shoulderToHip) / basis;
+        side.shoulderEarDiff = glm::length(earToShoulder) / basis;
+        side.femur = glm::length(hipToKnee) / basis;
+
+        shoulderToShoulder = glm::normalize(shoulderToShoulder);
+        shoulderToHip = glm::normalize(shoulderToHip);
+        hipToKnee = glm::normalize(hipToKnee);
+        earToShoulder = glm::normalize(earToShoulder);
+
+        glm::vec3 elbowToHand = glm::normalize(getLandmark(buffer, JointOffset::LeftElbow + leftToRight, index) - getLandmark(buffer, JointOffset::LeftWrist + leftToRight, index));
+        glm::vec3 shoulderToElbow = glm::normalize(getLandmark(buffer, JointOffset::LeftShoulder + leftToRight, index) - getLandmark(buffer, JointOffset::LeftElbow + leftToRight, index));
+        glm::vec3 hipToHip = glm::normalize(getLandmark(buffer, JointOffset::LeftHip + (1 * leftToRight), index) - getLandmark(buffer, JointOffset::RightHip + (-1 * leftToRight), index));
+        glm::vec3 kneeToAnkle = glm::normalize(getLandmark(buffer, JointOffset::LeftKnee + leftToRight, index) - getLandmark(buffer, JointOffset::LeftAnkle + leftToRight, index));
+        glm::vec3 ankleToFoot = glm::normalize(getLandmark(buffer, JointOffset::LeftAnkle + leftToRight, index) - getLandmark(buffer, JointOffset::LeftIndexToe + leftToRight, index));
+        glm::vec3 shoulderLocalXTransverse = glm::normalize(shoulderToShoulder - (glm::dot(shoulderToShoulder, shoulderToElbow)) * shoulderToElbow);
+        glm::vec3 hipLocalXTransverse = glm::normalize(hipToHip - (glm::dot(hipToHip, hipToKnee)) * hipToKnee);
+        glm::vec3 kneeLocalXTransverse = glm::normalize(hipToHip - (glm::dot(hipToHip, ankleToFoot)) * ankleToFoot);
+
+
+
+
+        //a lot of these cross products will need to be checked to make sure they make sense for both right and left
+        //they are definitely wrong, left hand rule
+        //also can definitely strip some normalization spam
+        //ALSO CHANGE ELBOW REVERSE ELBOW VERY IMPORTANT
+        side.shoulder = JointState{
+            std::atan2f(
+                glm::dot(glm::normalize(shoulderToElbow), shoulderToHip),
+                glm::dot(glm::normalize(shoulderToElbow), glm::normalize(glm::cross(shoulderToShoulder, shoulderToHip)))
+            ),
+            std::atan2f(
+                glm::dot(glm::normalize(shoulderToElbow), shoulderToHip),
+                glm::dot(glm::normalize(shoulderToElbow), shoulderToShoulder)
+            ),
+            std::atan2f(
+                glm::dot(glm::normalize(elbowToHand), shoulderLocalXTransverse),
+                glm::dot(glm::normalize(elbowToHand), glm::normalize(glm::cross(shoulderLocalXTransverse, shoulderToElbow)))
+            )
+        };
+        if (glm::dot(elbowToHand, shoulderToElbow) > 0.95f)
+        {
+            side.elbow = JointState{
+                    constexpr(180.0f / 180.0f * M_PI), NAN, TEMPORARY_FLOAT};
+        }
+        else
+        {
+            side.elbow = JointState{
                 std::atan2f(
-                    glm::dot(glm::normalize(elbowToHand), shoulderLocalXTransverse),
-                    glm::dot(glm::normalize(elbowToHand), glm::normalize(glm::cross(shoulderLocalXTransverse, elbowToShoulder)))
-                )},
-            JointState{glm::dot(glm::normalize(elbowToHand), glm::normalize(elbowToShoulder)), NAN, 0.0f},//elbow joint
-            JointState{
-                //flexion = pulling knees up, front vector. shoulder to knee vector is probably better for determining hip position
-                glm::dot(glm::normalize(hipToKnee), glm::normalize(glm::cross(hipToHip, shoulderToHip))),
-                //adduction
-                glm::dot(glm::normalize(hipToKnee), glm::normalize(hipToHip)),
+                    glm::dot(glm::normalize(elbowToHand), shoulderToElbow),
+                    glm::dot(glm::normalize(elbowToHand), glm::cross(shoulderToElbow, glm::cross(elbowToHand, shoulderToElbow)))
+                ),
+                NAN, TEMPORARY_FLOAT};
+        }
+        side.hip = JointState{
+            std::atan2f(
+                glm::dot(glm::normalize(hipToKnee), shoulderToHip),
+                glm::dot(glm::normalize(hipToKnee), glm::normalize(glm::cross(hipToHip, -1.0f * shoulderToHip)))
+            ),
+            std::atan2f(
+                glm::dot(glm::normalize(hipToKnee), hipToHip),
+                glm::dot(glm::normalize(hipToKnee), glm::normalize(glm::cross(hipToHip, -1.0f * shoulderToHip)))
+            ),
+            std::atan2f(
+                glm::dot(glm::normalize(kneeToAnkle), hipLocalXTransverse),
+                glm::dot(glm::normalize(kneeToAnkle), glm::normalize(glm::cross(hipLocalXTransverse, hipToKnee)))
+            )
+        };
+        if (glm::dot(kneeToAnkle, hipToKnee) > 0.95f) {
+            side.knee = JointState{
                 std::atan2f(
-                    glm::dot(glm::normalize(kneeToAnkle), hipLocalXTransverse),
-                    glm::dot(glm::normalize(kneeToAnkle), glm::normalize(glm::cross(hipLocalXTransverse, hipToKnee)))
-                )},//hip joint
-            JointState{
-                glm::dot(glm::normalize(hipToKnee), glm::normalize(kneeToAnkle)), NAN, 
+                    glm::dot(glm::normalize(kneeToAnkle), hipToKnee),
+                    glm::dot(glm::normalize(kneeToAnkle), glm::cross(hipToKnee, glm::cross(kneeToAnkle, hipToKnee)))
+                ),
+                NAN, 0.0f
+            };
+        }
+        else 
+        {
+            side.knee = JointState{
+                std::atan2f(
+                    glm::dot(glm::normalize(kneeToAnkle), hipToKnee),
+                    glm::dot(glm::normalize(kneeToAnkle), glm::cross(hipToKnee, glm::cross(kneeToAnkle, hipToKnee)))
+                ),
+                NAN, 
                 std::atan2f(
                     glm::dot(glm::normalize(ankleToFoot), kneeLocalXTransverse),
                     glm::dot(glm::normalize(ankleToFoot), glm::normalize(glm::cross(kneeLocalXTransverse, kneeToAnkle)))
-                )//clamp this, knee rotation doesn't occur below 10degrees of flexion
-            },//knee joint
-            JointState{
-                glm::dot(ankleToFoot, kneeToAnkle), NAN, 0.0f//foot inversion, need toes
-            },//ankle joint
-            JointState{
-                0.0f, NAN, 0.0f
-            },//wrist, just skip
-            glm::length(shoulderToHip) / basis,
-            glm::length(getLandmark(buffer, JointOffset::LeftEar, index) - getLandmark(buffer, JointOffset::LeftShoulder, index)) / basis,
-            glm::length(hipToKnee) / basis,
+                )
+            };
         }
-    };
+        side.ankle = JointState{
+            std::atan2f(
+                glm::dot(glm::normalize(ankleToFoot), kneeToAnkle),
+                glm::dot(glm::normalize(ankleToFoot), glm::cross(hipToKnee, glm::cross(ankleToFoot, kneeToAnkle)))
+            ), NAN, TEMPORARY_FLOAT//foot inversion, need toes
+        };
+        side.wrist = JointState{
+            TEMPORARY_FLOAT, NAN, TEMPORARY_FLOAT
+        };
+    }
+    return returnState;
 };
-BodyState FrameBuffer::getState() {
+const BodyState FrameBuffer::getState() {
     if (getFrameCount() < 1)
         throw std::out_of_range("No frames exist to get the state from");
     return getState(getFrameCount() - 1);

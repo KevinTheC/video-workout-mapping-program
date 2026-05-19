@@ -6,11 +6,13 @@
 #include <cstdint>
 #include <stdexcept>
 #include <vector>
+#define _USE_MATH_DEFINES
 #include <cmath>
 #include <memory>
 #include <algorithm>
 #include "BodyState.h"
 #define FRAME_SIZE 99
+#define TEMPORARY_FLOAT 0.0f
 class FrameUpdateObserver{
     public:
         virtual ~FrameUpdateObserver() {}
@@ -37,8 +39,8 @@ Rotations getUpVectorRotations(glm::vec3 dir) {
         bool initialize(size_t maxFrames);
         bool submitFrame(float* bufferBegin, const size_t numFloats);
         size_t const getFrameCount();
-        BodyState getState(size_t index);
-        BodyState getState();
+        const BodyState getState(size_t index);
+        const BodyState getState();
         void assignFrameUpdateObserver(FrameUpdateObserver* frameUpdateObserver);
         bool destroyFrameUpdateObserver();
     private:
