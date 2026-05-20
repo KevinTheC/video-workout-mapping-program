@@ -19,8 +19,8 @@ public:
         if (res == JNI_EDETACHED) {
             g_vm->AttachCurrentThread(&currentEnv, nullptr);
         }
-        BodyState state = tempMethod();
-        int totalElements = 44;
+        const BodyState& state = tempMethod();
+        int totalElements = 42;
         jfloatArray jCoords = currentEnv->NewFloatArray(totalElements);
         currentEnv->SetFloatArrayRegion(jCoords, 0, totalElements, reinterpret_cast<const jfloat*>(&state));
 

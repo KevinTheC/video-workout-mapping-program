@@ -21,6 +21,6 @@ void deleteListener(){
 void setResistanceOrigin(uint8_t* bufferBegin, bool isBilateral, float x1, float y1, float x2, float y2){
 
 };
-BodyState tempMethod(){
+const BodyState& tempMethod(){
     return fb.getState();
 }

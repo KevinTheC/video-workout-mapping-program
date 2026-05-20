@@ -12,7 +12,8 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(glm)
 
-
+#globbing doesn't change just because source files might change, so we need to redo this glob everytime a new file is made.
+#common recommendation is to just list source files, but you can also just modify this file to update source file list
 file(GLOB CORE_SOURCES
     src/*.cpp
 )

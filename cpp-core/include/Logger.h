@@ -1,4 +1,6 @@
+#pragma once
 #include <jni.h>
+#include <string>
 class Logger{
 private:
     bool isActive = false;
@@ -6,12 +8,7 @@ private:
     jclass bridgeClass;
     jmethodID logMethodID;
 public:
-    void activate(jclass bridgeClass, jmethodID logMethodID, JavaVM* globalJavaVM){
-        this->bridgeClass = bridgeClass;
-        this->logMethodID = logMethodID;
-        this->globalJavaVM = globalJavaVM;
-        this->isActive = true;
-    }
+    void activate(jclass bridgeClass, jmethodID logMethodID, JavaVM* globalJavaVM);
     bool remoteLog(const std::string& message) {
         if (!isActive)
             return false;
@@ -31,4 +28,4 @@ public:
         return true;
     }
 };
-Logger publicAccessLogger;
+extern Logger publicAccessLogger;

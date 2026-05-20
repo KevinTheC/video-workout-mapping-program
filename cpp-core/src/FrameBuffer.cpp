@@ -1,5 +1,6 @@
 #include "FrameBuffer.h"
 #include <iostream>
+
 //this really shouldn't be inlined
 inline glm::vec3 getLandmark(std::vector<float>& buffer, size_t jointIndex, size_t frameIndex) {
     return glm::make_vec3(std::addressof(*(
@@ -12,6 +13,7 @@ bool FrameBuffer::shutdown() {
     if (this->maxFrames == 0)
         return false;
     this->buffer = std::vector<float>(0);
+    this->stateBuffer = std::vector<const BodyState>(0);
     this->maxFrames = 0;
     this->nextFrame = 0;
     return true;
@@ -21,6 +23,8 @@ bool FrameBuffer::initialize(size_t maxFrames) {
         return false;
     this->buffer = std::vector<float>();
     this->buffer.reserve(maxFrames * FRAME_SIZE);
+    this->stateBuffer = std::vector<const BodyState>();
+    this->stateBuffer.reserve(maxFrames);
     this->maxFrames = maxFrames;
     this->nextFrame = 0;
     return true;
@@ -40,6 +44,7 @@ bool FrameBuffer::submitFrame(float* bufferBegin, const size_t numFloats) {
     //reorganizing the copy might increase speed
     //fixZDepth(nextFrame / FRAME_SIZE);
     nextFrame += numFloats;
+    this->stateBuffer.push_back(createState(getFrameCount() - 1));
     if (frameUpdateObserver) {
         this->frameUpdateObserver->onFrameUpdate((uintptr_t)this);
     }
@@ -95,6 +100,7 @@ void FrameBuffer::fixZDepth(const size_t frameIndex){
 FrameBuffer::FrameBuffer() {
     this->maxFrames = 0;
     this->buffer = std::vector<float>(0);
+    this->stateBuffer = std::vector<const BodyState>(0);
     this->nextFrame = 0;
     this->frameUpdateObserver = nullptr;
 };
@@ -112,14 +118,12 @@ bool FrameBuffer::destroyFrameUpdateObserver() {
     this->frameUpdateObserver = nullptr;
     return true;
 };
-const BodyState FrameBuffer::getState(size_t index) {
+const BodyState FrameBuffer::createState(size_t index) {
     if (index + 1 > getFrameCount())
         throw std::out_of_range("Tried retrieving state from a non-existant frame");
     BodyState returnState;
-    //this will definitely need to be changed to builder pattern, i dont know if compiler will be able to optimize this garbage return statement bs
-    //we can use a value to invert all the values for L/R
     for (size_t leftToRight = 0; leftToRight < 2; ++leftToRight){
-        BodySide side = leftToRight ? returnState.right : returnState.left;
+        BodySide& side = leftToRight ? returnState.right : returnState.left;
         glm::vec3 shoulderToShoulder = 
             getLandmark(buffer, JointOffset::LeftShoulder + (1 * leftToRight), index) -
             getLandmark(buffer, JointOffset::RightShoulder + (-1 * leftToRight), index);
@@ -156,55 +160,54 @@ const BodyState FrameBuffer::getState(size_t index) {
 
         //a lot of these cross products will need to be checked to make sure they make sense for both right and left
         //they are definitely wrong, left hand rule
-        //also can definitely strip some normalization spam
         //ALSO CHANGE ELBOW REVERSE ELBOW VERY IMPORTANT
         side.shoulder = JointState{
             std::atan2f(
-                glm::dot(glm::normalize(shoulderToElbow), shoulderToHip),
-                glm::dot(glm::normalize(shoulderToElbow), glm::normalize(glm::cross(shoulderToShoulder, shoulderToHip)))
+                glm::dot(shoulderToElbow, shoulderToHip),
+                glm::dot(shoulderToElbow, glm::normalize(glm::cross(shoulderToShoulder, shoulderToHip)))
             ),
             std::atan2f(
-                glm::dot(glm::normalize(shoulderToElbow), shoulderToHip),
-                glm::dot(glm::normalize(shoulderToElbow), shoulderToShoulder)
+                glm::dot(shoulderToElbow, shoulderToHip),
+                glm::dot(shoulderToElbow, shoulderToShoulder)
             ),
             std::atan2f(
-                glm::dot(glm::normalize(elbowToHand), shoulderLocalXTransverse),
-                glm::dot(glm::normalize(elbowToHand), glm::normalize(glm::cross(shoulderLocalXTransverse, shoulderToElbow)))
+                glm::dot(elbowToHand, shoulderLocalXTransverse),
+                glm::dot(elbowToHand, glm::normalize(glm::cross(shoulderLocalXTransverse, shoulderToElbow)))
             )
         };
         if (glm::dot(elbowToHand, shoulderToElbow) > 0.95f)
         {
             side.elbow = JointState{
-                    constexpr(180.0f / 180.0f * M_PI), NAN, TEMPORARY_FLOAT};
+                180.0f / 180.0f * M_PI, NAN, TEMPORARY_FLOAT};
         }
         else
         {
             side.elbow = JointState{
                 std::atan2f(
-                    glm::dot(glm::normalize(elbowToHand), shoulderToElbow),
-                    glm::dot(glm::normalize(elbowToHand), glm::cross(shoulderToElbow, glm::cross(elbowToHand, shoulderToElbow)))
+                    glm::dot(elbowToHand, shoulderToElbow),
+                    glm::dot(elbowToHand, glm::cross(shoulderToElbow, glm::cross(elbowToHand, shoulderToElbow)))
                 ),
                 NAN, TEMPORARY_FLOAT};
         }
         side.hip = JointState{
             std::atan2f(
-                glm::dot(glm::normalize(hipToKnee), shoulderToHip),
-                glm::dot(glm::normalize(hipToKnee), glm::normalize(glm::cross(hipToHip, -1.0f * shoulderToHip)))
+                glm::dot(hipToKnee, shoulderToHip),
+                glm::dot(hipToKnee, glm::normalize(glm::cross(hipToHip, -1.0f * shoulderToHip)))
             ),
             std::atan2f(
-                glm::dot(glm::normalize(hipToKnee), hipToHip),
-                glm::dot(glm::normalize(hipToKnee), glm::normalize(glm::cross(hipToHip, -1.0f * shoulderToHip)))
+                glm::dot(hipToKnee, hipToHip),
+                glm::dot(hipToKnee, glm::normalize(glm::cross(hipToHip, -1.0f * shoulderToHip)))
             ),
             std::atan2f(
-                glm::dot(glm::normalize(kneeToAnkle), hipLocalXTransverse),
-                glm::dot(glm::normalize(kneeToAnkle), glm::normalize(glm::cross(hipLocalXTransverse, hipToKnee)))
+                glm::dot(kneeToAnkle, hipLocalXTransverse),
+                glm::dot(kneeToAnkle, glm::normalize(glm::cross(hipLocalXTransverse, hipToKnee)))
             )
         };
         if (glm::dot(kneeToAnkle, hipToKnee) > 0.95f) {
             side.knee = JointState{
                 std::atan2f(
-                    glm::dot(glm::normalize(kneeToAnkle), hipToKnee),
-                    glm::dot(glm::normalize(kneeToAnkle), glm::cross(hipToKnee, glm::cross(kneeToAnkle, hipToKnee)))
+                    glm::dot(kneeToAnkle, hipToKnee),
+                    glm::dot(kneeToAnkle, glm::cross(hipToKnee, glm::cross(kneeToAnkle, hipToKnee)))
                 ),
                 NAN, 0.0f
             };
@@ -213,20 +216,20 @@ const BodyState FrameBuffer::getState(size_t index) {
         {
             side.knee = JointState{
                 std::atan2f(
-                    glm::dot(glm::normalize(kneeToAnkle), hipToKnee),
-                    glm::dot(glm::normalize(kneeToAnkle), glm::cross(hipToKnee, glm::cross(kneeToAnkle, hipToKnee)))
+                    glm::dot(kneeToAnkle, hipToKnee),
+                    glm::dot(kneeToAnkle, glm::cross(hipToKnee, glm::cross(kneeToAnkle, hipToKnee)))
                 ),
                 NAN, 
                 std::atan2f(
-                    glm::dot(glm::normalize(ankleToFoot), kneeLocalXTransverse),
-                    glm::dot(glm::normalize(ankleToFoot), glm::normalize(glm::cross(kneeLocalXTransverse, kneeToAnkle)))
+                    glm::dot(ankleToFoot, kneeLocalXTransverse),
+                    glm::dot(ankleToFoot, glm::normalize(glm::cross(kneeLocalXTransverse, kneeToAnkle)))
                 )
             };
         }
         side.ankle = JointState{
             std::atan2f(
-                glm::dot(glm::normalize(ankleToFoot), kneeToAnkle),
-                glm::dot(glm::normalize(ankleToFoot), glm::cross(hipToKnee, glm::cross(ankleToFoot, kneeToAnkle)))
+                glm::dot(ankleToFoot, kneeToAnkle),
+                glm::dot(ankleToFoot, glm::cross(hipToKnee, glm::cross(ankleToFoot, kneeToAnkle)))
             ), NAN, TEMPORARY_FLOAT//foot inversion, need toes
         };
         side.wrist = JointState{
@@ -235,8 +238,13 @@ const BodyState FrameBuffer::getState(size_t index) {
     }
     return returnState;
 };
-const BodyState FrameBuffer::getState() {
+const BodyState& FrameBuffer::getState() {
     if (getFrameCount() < 1)
         throw std::out_of_range("No frames exist to get the state from");
     return getState(getFrameCount() - 1);
+};
+const BodyState& FrameBuffer::getState(size_t index) {
+    if (index >= getFrameCount())
+        throw std::out_of_range("Index out of bounds");
+    return this->stateBuffer[index];
 };

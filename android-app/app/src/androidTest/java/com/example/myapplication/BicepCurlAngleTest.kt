@@ -15,38 +15,85 @@ import org.junit.runner.RunWith
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.collections.contentToString
+import kotlin.math.PI
 import kotlin.text.get
 
 @RunWith(AndroidJUnit4::class)
 class BicepCurlAngleTest {
     @Test
     fun testBicepCurlAngle() {
-        SampleVideoTest.Companion.SampleVideoTestFunction("wristsupination1.mp4",
+        SampleVideoTest.sampleVideoTestFunction("bicepcurl.mp4",
             SampleVideoTest.SampleHandler({x,y->
-                x.getData().add(floatArrayOf(y.extra[3], y.extra[4], y.extra[6], y.extra[7], y.extra[9], y.extra[10]))
+                x.getData().add(floatArrayOf(
+                    y.getPlanarAngle(FrameUpdateResponse.Side.left,
+                        FrameUpdateResponse.Joint.elbow,
+                        FrameUpdateResponse.Plane.flexion),
+                    y.getPlanarAngle(FrameUpdateResponse.Side.right,
+                        FrameUpdateResponse.Joint.elbow,
+                        FrameUpdateResponse.Plane.flexion)))
+                Log.d("BicepCurlTest", "LAngle = ${y.getPlanarAngle(FrameUpdateResponse.Side.left,
+                    FrameUpdateResponse.Joint.elbow,
+                    FrameUpdateResponse.Plane.flexion)} RAngle = ${y.getPlanarAngle(FrameUpdateResponse.Side.right,
+                    FrameUpdateResponse.Joint.elbow,
+                    FrameUpdateResponse.Plane.flexion)}")
                 "State OK" to true
-                                          }, {x->
-                                              Log.d("BicepCurlTest", x.getData().joinToString(
-                                                  separator = ",",
-                                                  prefix = "[",
-                                                  postfix = "]"
-                                              ) { array ->
-                                                  array.slice(0..1).joinToString(separator = ",", prefix = "[", postfix = "]")
-                                              })
-                Log.d("BicepCurlTest", x.getData().joinToString(
-                    separator = ",",
-                    prefix = "[",
-                    postfix = "]"
-                ) { array ->
-                    array.slice(2..3).joinToString(separator = ",", prefix = "[", postfix = "]")
-                })
-                Log.d("BicepCurlTest", x.getData().joinToString(
-                    separator = ",",
-                    prefix = "[",
-                    postfix = "]"
-                ) { array ->
-                    array.slice(4..5).joinToString(separator = ",", prefix = "[", postfix = "]")
-                })
+            }, {x-> //now we go through, make sure both sides have a min-max difference of at least 70 degrees
+                //i should really check to make sure delta isn't greater than 180
+                //AI: i copide this straight from gemini, did test it though
+                val data = x.getData()
+
+
+                var unwrappedLeft = 0.0f
+                var unwrappedRight = 0.0f
+
+                var leftMin = 9999.0f
+                var leftMax = -9999.0f
+                var rightMin = 9999.0f
+                var rightMax = -9999.0f
+
+                var prevLeftRaw = data.firstOrNull()?.get(0) ?: 0.0f
+                var prevRightRaw = data.firstOrNull()?.get(1) ?: 0.0f
+
+                val PI_F = PI.toFloat()
+                val TWO_PI_F = (2.0 * PI).toFloat()
+                unwrappedLeft = prevLeftRaw
+                unwrappedRight = prevRightRaw
+
+                for (entry in data) {
+                    val currentLeftRaw = entry[0]
+                    val currentRightRaw = entry[1]
+
+                    var diffLeft = currentLeftRaw - prevLeftRaw
+                    while (diffLeft < -PI_F) diffLeft += TWO_PI_F
+                    while (diffLeft > PI_F)  diffLeft -= TWO_PI_F
+
+                    unwrappedLeft += diffLeft
+                    prevLeftRaw = currentLeftRaw
+
+                    var diffRight = currentRightRaw - prevRightRaw
+                    while (diffRight < -PI_F) diffRight += TWO_PI_F
+                    while (diffRight > PI_F)  diffRight -= TWO_PI_F
+
+                    unwrappedRight += diffRight
+                    prevRightRaw = currentRightRaw
+
+                    if (unwrappedLeft < leftMin) leftMin = unwrappedLeft
+                    if (unwrappedLeft > leftMax) leftMax = unwrappedLeft
+
+                    if (unwrappedRight < rightMin) rightMin = unwrappedRight
+                    if (unwrappedRight > rightMax) rightMax = unwrappedRight
+                }
+
+                // Now you can safely check your 70-degree range gap!
+                val leftRange = leftMax - leftMin
+                val rightRange = rightMax - rightMin
+                if ((leftMax - leftMin > (70.0f * PI) / 180.0f) and (rightMax - rightMin > (70.0f * PI) / 180.0f)) {
+                    "State OK" to true
+                }
+                else {
+                    "Model could not capture at least 70 degrees of motion in flexion along the elbow" +
+                            "LMax = $leftMax LMin = $leftMin RMax = $rightMax RMin = $rightMin" to false
+                }
             })
         )
     }

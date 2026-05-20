@@ -21,7 +21,7 @@ class SampleVideoTest {
                 println("Native library failed to load: $e")
             }
         }
-        fun SampleVideoTestFunction(assetName: String, handler : SampleHandler){
+        fun sampleVideoTestFunction(assetName: String, handler : SampleHandler){
             PhysicsAPI.Companion.CppLoggerBridge.initCppLogger()
             //use a predetermined clip to test
             val baseOptions = BaseOptions.builder()
@@ -40,7 +40,7 @@ class SampleVideoTest {
             val context = InstrumentationRegistry.getInstrumentation().context
 
             val retriever = MediaMetadataRetriever()
-            try {//
+            try {
                 val assetFileDescriptor = context.assets.openFd(assetName)
 
                 retriever.setDataSource(assetFileDescriptor.fileDescriptor, assetFileDescriptor.startOffset, assetFileDescriptor.length)
@@ -55,7 +55,7 @@ class SampleVideoTest {
                 val durationMs = durationStr?.toLong() ?: 0L
 
                 // 1000ms / 30fps = 33.33ms
-                val frameIntervalMs = 17L
+                val frameIntervalMs = 33L
                 PhysicsAPI.initializeBuffer(900)
                 PhysicsAPI.registerListener { response: FrameUpdateResponse ->
                     handler.callPredicate(response)
@@ -112,11 +112,12 @@ class SampleVideoTest {
                 retriever.release()
             }
             handler.callFinally()
+            assert(handler.getState().second, {handler.getState().first})
         }
     }
     class SampleHandler(
         val predicate : (SampleHandler, FrameUpdateResponse) -> Pair<String, Boolean>,
-        val finally : (SampleHandler) -> Unit
+        val finally : (SampleHandler) -> Pair<String, Boolean>
     ){
         private val data: MutableList<FloatArray> = mutableListOf()
         private var state: Pair<String, Boolean> = "State OK" to true
@@ -128,7 +129,7 @@ class SampleVideoTest {
             state = predicate(this, fur)
         }
         fun callFinally(){
-            finally(this)
+            state = finally(this)
         }
         fun getState() : Pair<String, Boolean>{
             return state
