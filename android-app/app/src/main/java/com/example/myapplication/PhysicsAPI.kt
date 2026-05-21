@@ -14,6 +14,10 @@ class PhysicsAPI {
         @JvmStatic
         external fun submitFrame(frame: ByteBuffer): Boolean
         @JvmStatic
+        external fun nativeGetBatchState(indices: IntArray, outputBuffer: FloatArray, stateIndex: Long)
+        inline fun nativeGetBatchState(indices: IntArray, outputBuffer: FloatArray) =
+            nativeGetBatchState(indices, outputBuffer, -1)
+        @JvmStatic
         external fun setResistanceOrigin(frame: ByteBuffer, isBilateral: Boolean, x1 : Float, y1 : Float, x2: Float, y2: Float): Unit
         inline fun setResistanceOrigin(frame: ByteBuffer, x1 : Float, y1 : Float) =
             setResistanceOrigin(frame, false, x1, y1, 0f, 0f)

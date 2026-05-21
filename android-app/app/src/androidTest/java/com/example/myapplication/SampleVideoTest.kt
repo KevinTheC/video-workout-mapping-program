@@ -58,7 +58,7 @@ class SampleVideoTest {
                 val frameIntervalMs = 33L
                 PhysicsAPI.initializeBuffer(900)
                 PhysicsAPI.registerListener { response: FrameUpdateResponse ->
-                    handler.callPredicate(response)
+                    handler.callPredicate()
                 }
                 for (timestampMs in 0 until durationMs step frameIntervalMs) {
 
@@ -116,17 +116,17 @@ class SampleVideoTest {
         }
     }
     class SampleHandler(
-        val predicate : (SampleHandler, FrameUpdateResponse) -> Pair<String, Boolean>,
+        val predicate : (SampleHandler) -> Pair<String, Boolean>,
         val finally : (SampleHandler) -> Pair<String, Boolean>
     ){
         private val data: MutableList<FloatArray> = mutableListOf()
         private var state: Pair<String, Boolean> = "State OK" to true
-        fun callPredicate(fur : FrameUpdateResponse) {
+        fun callPredicate() {
             //if predicate already failed, fail fast
             if (!state.second){
                 return Unit
             }
-            state = predicate(this, fur)
+            state = predicate(this)
         }
         fun callFinally(){
             state = finally(this)

@@ -30,6 +30,8 @@ class FrameBuffer{
         const BodyState& getState();
         void assignFrameUpdateObserver(FrameUpdateObserver* frameUpdateObserver);
         bool destroyFrameUpdateObserver();
+        void updateState(float* kotlinBufferAddress, std::vector<size_t> requestedUpdateIndexes, size_t stateIndex);
+        void updateState(float* kotlinBufferAddress, std::vector<size_t> requestedUpdateIndexes);
     private:
         size_t maxFrames;
         std::vector<float> buffer;

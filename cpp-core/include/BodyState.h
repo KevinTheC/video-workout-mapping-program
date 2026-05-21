@@ -1,5 +1,6 @@
-#include <cstdint>
 #pragma once
+#include <type_traits>
+#include <cstdint>
 struct JointState{
     float flexion;
     float adduction;
@@ -17,9 +18,12 @@ struct BodySide {
     float femur;
 };
 struct BodyState{
+    //
     BodySide left;
     BodySide right;
 };
+static_assert(sizeof(BodyState) == ((sizeof(float) * 3 * 6) + (sizeof(float) * 3)) * 2, 
+    "CRITICAL: BodyState size must be an exact multiple of float size, FrameBuffer::updateState relies on this. Make sure you look at FrameBuffer::updateState before changing state size");
 enum JointOffset {
     LeftEar = 7,
     RightEar,

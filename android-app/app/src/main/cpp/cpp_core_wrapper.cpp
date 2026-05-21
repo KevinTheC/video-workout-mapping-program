@@ -79,3 +79,35 @@ Java_com_example_myapplication_PhysicsAPI_logFromCpp(
         jobject _,
         jstring str
         ){}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_example_myapplication_PhysicsAPI_nativeGetBatchState(
+        JNIEnv* env,
+        jobject thiz,
+        jintArray indices,
+        jfloatArray output_buffer,
+        jlong state_index){
+    jint* nativeIndices = static_cast<jint*>(env->GetPrimitiveArrayCritical(indices, nullptr));
+    jfloat* nativeOutputBuffer = static_cast<jfloat*>(env->GetPrimitiveArrayCritical(output_buffer, nullptr));
+    jsize requestCount = env->GetArrayLength(indices);
+
+    std::vector<size_t> requestedUpdateIndexes(nativeIndices, nativeIndices + requestCount);
+    if (state_index > -1)
+    {
+        fb.updateState(
+            static_cast<float*>(nativeOutputBuffer),
+            requestedUpdateIndexes,
+            static_cast<size_t>(state_index)
+        );
+    }
+    else
+    {
+        fb.updateState(
+            static_cast<float*>(nativeOutputBuffer),
+            requestedUpdateIndexes
+        );
+    }
+    // 0 tells the JVM "output_buffer" was modified, commit the data back to Kotlin
+    env->ReleasePrimitiveArrayCritical(indices, nativeIndices, JNI_ABORT);
+    env->ReleasePrimitiveArrayCritical(output_buffer, nativeOutputBuffer, 0);
+}

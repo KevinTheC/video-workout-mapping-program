@@ -23,19 +23,24 @@ class BicepCurlAngleTest {
     @Test
     fun testBicepCurlAngle() {
         SampleVideoTest.sampleVideoTestFunction("bicepcurl.mp4",
-            SampleVideoTest.SampleHandler({x,y->
+            SampleVideoTest.SampleHandler({x->
+                PhysicsAPI.nativeGetBatchState(intArrayOf(
+                    BodyState.getIndexOf(BodyState.Side.left,
+                        BodyState.Joint.elbow,
+                        BodyState.Plane.flexion),
+                    BodyState.getIndexOf(BodyState.Side.right,
+                        BodyState.Joint.elbow,
+                        BodyState.Plane.flexion)),
+                    BodyState.values)
+
                 x.getData().add(floatArrayOf(
-                    y.getPlanarAngle(FrameUpdateResponse.Side.left,
-                        FrameUpdateResponse.Joint.elbow,
-                        FrameUpdateResponse.Plane.flexion),
-                    y.getPlanarAngle(FrameUpdateResponse.Side.right,
-                        FrameUpdateResponse.Joint.elbow,
-                        FrameUpdateResponse.Plane.flexion)))
-                Log.d("BicepCurlTest", "LAngle = ${y.getPlanarAngle(FrameUpdateResponse.Side.left,
-                    FrameUpdateResponse.Joint.elbow,
-                    FrameUpdateResponse.Plane.flexion)} RAngle = ${y.getPlanarAngle(FrameUpdateResponse.Side.right,
-                    FrameUpdateResponse.Joint.elbow,
-                    FrameUpdateResponse.Plane.flexion)}")
+                    BodyState.getPlanarAngle(BodyState.Side.left,
+                        BodyState.Joint.elbow,
+                        BodyState.Plane.flexion),
+                    BodyState.getPlanarAngle(BodyState.Side.right,
+                        BodyState.Joint.elbow,
+                        BodyState.Plane.flexion)
+                ))
                 "State OK" to true
             }, {x-> //now we go through, make sure both sides have a min-max difference of at least 70 degrees
                 //i should really check to make sure delta isn't greater than 180

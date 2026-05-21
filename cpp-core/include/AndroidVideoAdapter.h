@@ -1,0 +1,2 @@
+//kotlin calls this, the issue is I didn't end up generalizing my callback function. Kotlin only really needs access to the joint dimensions (already copied) and muscle scoring.
+//all results should be floats, so I can create a one-size fits all function

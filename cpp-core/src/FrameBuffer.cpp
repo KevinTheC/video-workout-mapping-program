@@ -248,3 +248,12 @@ const BodyState& FrameBuffer::getState(size_t index) {
         throw std::out_of_range("Index out of bounds");
     return this->stateBuffer[index];
 };
+void FrameBuffer::updateState(float* kotlinBufferAddress, std::vector<size_t> requestedUpdateIndexes, size_t stateIndex){
+    //stateIndex needs to be checked
+    for (size_t index : requestedUpdateIndexes) {
+        kotlinBufferAddress[index] = ((float*)&(this->stateBuffer[stateIndex]))[index];
+    }
+};
+void FrameBuffer::updateState(float* kotlinBufferAddress, std::vector<size_t> requestedUpdateIndexes){
+    updateState(kotlinBufferAddress, requestedUpdateIndexes, getFrameCount() - 1);
+};

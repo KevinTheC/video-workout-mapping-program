@@ -5,6 +5,8 @@ extern FrameBuffer fb;
 int testIncrement(int value);
 bool initializeBuffer(size_t maxFrames);
 bool submitFrame(float* bufferBegin, size_t numFloats);
+// bool submitFrame(float* bufferBegin, size_t width, size_t height, int64_t timestamp);
+void updateState(float* kotlinBufferAddress, std::vector<size_t> requestedUpdateIndexes, size_t stateIndex);
 bool shutdown();
 void registerListener(FrameUpdateObserver* fuo);
 void deleteListener();
